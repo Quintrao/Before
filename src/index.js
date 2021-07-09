@@ -2,6 +2,7 @@ import * as PIXI from "pixi.js";
 import { keyboard } from "./keyboard";
 import { Howl, Howler } from "howler";
 import pixiSound from "pixi-sound";
+// import {tutorial} from "tut.js";
 
 const world = {
   width: 512,
@@ -22,8 +23,12 @@ const actResults = {
     text: ["Вы собрали немного дров"],
   },
   sleep: {
-    title: ["Бессонная ночь"],
-    text: ["Вы нихуя не выспались"],
+    title: ["Бессонная ночь", "Обычная ночь", "Спокойная ночь"],
+    text: [
+      "Переживания прошедшего дня долго не давали вам уснуть",
+      "Вы выспались и готовы к новому дню",
+      "Вы отлично выспались ",
+    ],
   },
   gathering: {
     title: ["Собирательство"],
@@ -49,23 +54,26 @@ const actResults = {
 
 const player = {
   satiety: 80,
-  satietyMax: 120,
   health: 6,
-  healthMax: 6,
   energy: 80,
-  energyMax: 100,
 };
 
 const resources = {
   wood: 15,
   food: 25,
-  woodMax: 30,
-  foodMax: 40,
+  flame: 50,
+};
+
+const max = {
+  satiety: 120,
+  health: 6,
+  energy: 100,
+  wood: 30,
+  food: 40,
+  flame: 100,
 };
 
 const vitalStates = {
-  flame: 50,
-  flameMax: 100,
   day: 1,
   isDay: true,
 };
@@ -92,9 +100,13 @@ app.loader
   .add("redButton", "redButton2.png")
   .add("smallBonfire", "smallBonfire2.png")
   .add("click", "music/click.mp3")
+  .add("music/start.mp3")
   .add("day", "day.png")
   .add("night", "night.png")
-  .load(setup);
+  .add('start', 'start.png')
+  .add('start6', 'start6.png')
+  .add('cave', 'cave.jpg')
+  .load(startMenu);
 
 let gameScene = new PIXI.Container();
 gameScene.position.set(0, 0);
@@ -110,6 +122,72 @@ let click = new Howl({
   src: ["music/click.mp3"],
 });
 click.volume = 1.0;
+
+let startMuz = new Howl({
+  src: ["music/start.mp3"],
+});
+click.volume = 1.0;
+
+function startMenu () {
+  
+
+
+
+  let startTexture = new PIXI.Texture.from('start')
+  let start6Texture = new PIXI.Texture.from('start6')
+
+  let start6 = new PIXI.Sprite(start6Texture)
+  start6.anchor.set(0.5,0.5)
+  start6.height = start6.width = 50
+  start6.position.set(world.width*4/5, world.height*4/5)
+
+
+  let start = new PIXI.Sprite(startTexture)
+  start.anchor.set(0.5,0.5)
+  start.height = start.width = 100
+  start.position.set(world.width/2, world.height/2)
+  start6.tint = 0x501412
+  start.buttonMode = start.interactive = true
+
+  const gameStart = () => {
+    startMuz.play()
+    gameScene.removeChildren()
+    // setup()
+    tutorial()
+  }
+  const scalerSpinner = () => {
+    start.height = start.width = 120
+    app.ticker.add(()=>{ start6.rotation +=0.05})
+  }
+
+  const scalerSpinnerOff = () => {
+    start.height = start.width = 100
+    start6.rotation = 0
+    app.ticker.add(()=>{ start6.rotation -=0.05})
+  }
+
+  start.on('pointerover', scalerSpinner)
+        .on('pointerout', scalerSpinnerOff)
+        .on('pointerdown', gameStart)
+
+  
+  gameScene.addChild(start, start6)
+}
+
+const tutorial = () => {
+  const textureCave = PIXI.Texture.from("cave")
+  let currentFon = new PIXI.Sprite(textureCave)
+  currentFon.width=world.width
+  currentFon.height=world.height
+  gameScene.addChild(currentFon)
+}
+
+
+// const next = (func) => {
+//   func()
+// }
+
+// next(tutorial)
 
 function setup() {
   //#region textures
@@ -326,7 +404,6 @@ function setup() {
   const healthRender = () => {
     let renderedHearts = Math.floor(player.health / 2);
     let hearts = [];
-    console.log(renderedHearts);
     for (let i = 0; i < renderedHearts; i++) {
       hearts[i] = new PIXI.Sprite(textureFullheart);
       hearts[i].width = hearts[i].height = tab;
@@ -349,7 +426,7 @@ function setup() {
     satietyMax.drawRect(
       soupImage.x + soupImage.width * 1.2,
       soupImage.y + soupImage.height / 3,
-      player.satietyMax,
+      max.satiety,
       soupImage.height / 3
     );
     healthBar.addChild(satietyMax);
@@ -371,7 +448,7 @@ function setup() {
     flameMax.drawRect(
       smallBonfireImage.x + smallBonfireImage.width * 1.2,
       smallBonfireImage.y + smallBonfireImage.height / 3,
-      vitalStates.flameMax,
+      max.flame,
       smallBonfireImage.height / 3
     );
     healthBar.addChild(flameMax);
@@ -381,7 +458,7 @@ function setup() {
     flame.drawRect(
       smallBonfireImage.x + smallBonfireImage.width * 1.2,
       smallBonfireImage.y + smallBonfireImage.height / 3,
-      vitalStates.flame,
+      resources.flame,
       smallBonfireImage.height / 3
     );
     healthBar.addChild(flame);
@@ -393,7 +470,7 @@ function setup() {
     energyMax.drawRect(
       energyImage.x + energyImage.width * 1.2,
       energyImage.y + energyImage.height / 3,
-      player.energyMax,
+      max.energy,
       energyImage.height / 3
     );
 
@@ -432,26 +509,11 @@ function setup() {
     }
   }
 
-  function check() {
-    if (resources.food > resources.foodMax) {
-      resources.food = resources.foodMax;
+  function check(obj) {
+    for (let key in obj) {
+      if (obj[key] > max[key]) obj[key] = max[key];
+      if (obj[key] < 0) obj[key] = 0;
     }
-    if (resources.wood > resources.woodMax) {
-      resources.wood = resources.woodMax;
-    }
-    if (player.satiety > player.satietyMax) {
-      player.satiety = player.satietyMax;
-    }
-    if (player.energy > player.energyMax) {
-      player.energy = player.energyMax;
-    }
-    if (player.health > player.healthMax) {
-      player.health = player.healthMax;
-    }
-    if (vitalStates.flame > vitalStates.flameMax) {
-      vitalStates.flame = vitalStates.flameMax;
-    }
-    console.log(player.health);
   }
 
   refresher();
@@ -554,28 +616,32 @@ function setup() {
     resources.food += huntingResults.food;
     player.energy -= 50;
     player.health -= huntingResults.damage;
-    if (resources.food > resources.foodMax) {
-      resources.food = resources.foodMax;
-    }
-    if (player.energy < 0) {
-      player.energy = 0;
-    }
+
+
     bonfireMenuClose();
+    check(resources)
+    check(player)
     dayToNight();
     refresher();
     resultTab(actResults.hunting, huntingResults.text, huntingResults.variant);
-    deathCheck()
+    deathCheck();
   }
 
   function gathering() {
     click.play();
     bonfireMenuClose();
+    let luck = Math.random();
     let crop = 2;
+
+    if (luck > 0.6) {
+      crop = 3;
+    }
     resources.food += crop;
     player.energy -= 30;
     let result = "Еда +" + crop + "\nЭнергия -30";
     dayToNight();
-    check();
+    check(resources)
+    check(player)
     refresher();
     resultTab(actResults.gathering, result);
   }
@@ -588,7 +654,8 @@ function setup() {
     player.energy -= 30;
     let result = "Дрова +" + crop + "\nЭнергия -30";
     dayToNight();
-    check();
+    check(resources)
+    check(player)
     refresher();
     resultTab(actResults.supplies, result);
   }
@@ -598,7 +665,7 @@ function setup() {
     bonfireMenuClose();
     player.energy += 10;
     dayToNight();
-    check();
+    check(player);
     refresher();
     resultTab(actResults.rest, "Энергия +10");
   }
@@ -609,21 +676,22 @@ function setup() {
     resources.food -= 5;
     player.energy += 10;
     player.satiety += 40;
-    check();
+    check(resources)
+    check(player)
     refresher();
     resultTab(actResults.eating, "Энергия +10, \nСытость +40");
-    // nightToDay();
+    nightToDay();
   }
 
   function kindle() {
     click.play();
     bonfireMenuClose();
     resources.wood -= 5;
-    vitalStates.flame += 20;
-    check();
+    resources.flame += 20;
+    check(resources);
     refresher();
     resultTab(actResults.kindle, "Дрова -5, \nПламя Костра +20");
-    // nightToDay();
+    nightToDay();
   }
 
   function sleep() {
@@ -631,16 +699,17 @@ function setup() {
     bonfireMenuClose();
     player.energy += 30;
     player.satiety -= 20;
-    vitalStates.flame -= 10;
+    resources.flame -= 10;
     nightToDay();
-    check();
+    check(resources)
+    check(player)
     refresher();
     resultTab(actResults.sleep, "Энергия +30");
   }
 
   function showResources() {
-    let text = resources.food + ' / ' + resources.foodMax + '\n'
-    resultTab(none, text)
+    // let text = resources.food + " / " + resources.foodMax + "\n";
+    // resultTab(none, text);
   }
 
   let resultContainer = new PIXI.Container();
