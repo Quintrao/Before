@@ -112,7 +112,8 @@ app.loader
   .add("redButton", "redButton2.png")
   .add("smallBonfire", "smallBonfire2.png")
   .add("click", "music/click.mp3")
-  .add("music/start.mp3")
+  .add("music/start-1.mp3")
+  .add("music/page.mp3")
   .add("day", "day.png")
   .add("night", "night.png")
   .add("start", "start2.png")
@@ -143,9 +144,13 @@ let click = new Howl({
 click.volume = 1.0;
 
 let startMuz = new Howl({
-  src: ["music/start.mp3"],
+  src: ["music/start-1.mp3"],
 });
 click.volume = 1.0;
+
+let pageSound = new Howl({
+  src: ["music/page.mp3"],
+});
 
 function startMenu() {
 const textureCave = PIXI.Texture.from("cave");
@@ -203,6 +208,7 @@ gameScene.addChild(currentFon)
 }
 
 function tutorial() {
+  pageSound.play()
   const left = PIXI.Texture.from("leftArrow");
   const right = PIXI.Texture.from("rightArrow");
 
@@ -266,14 +272,17 @@ function tutorial() {
     if (page < tutorialText.length - 1) {
       page += 1;
       pageRefresher(page);
+      pageSound.play()
     } else {
       container.removeChildren();
+      startMuz.play()
       setup();
     }
   }
 
   function prevPage() {
     container.removeChild(currentText);
+    pageSound.play()
     page -= 1;
     if (page < 0) {
       page = 0;
