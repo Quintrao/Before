@@ -5,9 +5,13 @@ import pixiSound from "pixi-sound";
 // import {tutorial} from "tut.js";
 
 const world = {
-  width: 512,
-  height: 512,
+  width: window.innerWidth * 0.9,
+  height: window.innerHeight * 0.9,
 };
+
+if (world.width > world.height) {
+  world.width = world.height;
+}
 
 const actResults = {
   hunting: {
@@ -78,10 +82,18 @@ const vitalStates = {
   isDay: true,
 };
 
+const tutorialText = [
+  "Добро пожаловать в Before \n\n\nЭто пошаговая survival игра на движке JavaScript",
+  "Эта игра - часть моего обучения JS\n\nХотя это и не предусмотрено, будет здорово, если вы получите удовольствие от неё",
+  "Вы начинаете игру в качестве пещерного человека, которому предстоит выжить в суровом доисторическом мире. \n\nИгровой цикл состоит из двух фаз: дня и ночи. Днём можно совершать вылазки из пещеры для добычи припасов, ночь стоит посвятить заботе о потребностях своего персонажа.",
+  "У каждого действия есть вероятность успеха или неудачи, но у некоторых эти эффекты выражены острее. \n\nДобывайте пищу, собирайте припасы и обустраивайте пещеру. Следите за состоянием шкал здоровья, сытости и энергии. \n\nИ не дайте костру погаснуть!",
+  "Со временем, поддерживая баланс своих потребностей, вы повысите эффективность своих действий и откроете новые. Вы начнёте больше понимать окружающий ваc мир, создавать орудия, предметы искусства или способы коммуникации. \n\n Помните, что каждый ваш выбор важен. \n Удачной игры!",
+];
+
 const app = new PIXI.Application({
   width: world.width,
   height: world.height,
-  backgroundColor: 0xe83a3a,
+  backgroundColor: 0x9423E1,
 });
 document.body.appendChild(app.view);
 
@@ -89,7 +101,7 @@ console.log(app.stage.height, app.stage.width);
 console.log(world.width, world.height);
 
 app.loader
-  .add("fon", "fon3.jpg")
+  .add("fon", "fon5.png")
   .add("food", "food3.png")
   .add("wood", "wood2.png")
   .add("soup", "soup.png")
@@ -103,10 +115,16 @@ app.loader
   .add("music/start.mp3")
   .add("day", "day.png")
   .add("night", "night.png")
-  .add('start', 'start.png')
-  .add('start6', 'start6.png')
-  .add('cave', 'cave.jpg')
-  .load(startMenu);
+  .add("start", "start2.png")
+  .add("start6", "start6.png")
+  .add("cave", "cave.jpg")
+  .add("cave2", "cave3.jpg")
+  .add("wall", "wall.jpg")
+  .add("paper", "paper3.png")
+  .add("leftArrow", "leftArrow.png")
+  .add("rightArrow", "rightArrow.png")
+  // .load(setup);
+  .load(startMenu)
 
 let gameScene = new PIXI.Container();
 gameScene.position.set(0, 0);
@@ -114,6 +132,7 @@ gameScene.width = world.width;
 gameScene.height = world.height;
 gameScene.backgroundColor = 0x7c030e;
 app.stage.addChild(gameScene);
+
 
 let textMap = new Map();
 let actionMap = new Map();
@@ -128,60 +147,140 @@ let startMuz = new Howl({
 });
 click.volume = 1.0;
 
-function startMenu () {
-  
+function startMenu() {
+const textureCave = PIXI.Texture.from("cave");
+const currentFon = new PIXI.Sprite(textureCave);
+currentFon.width = world.width;
+currentFon.height = world.height;
 
+gameScene.addChild(currentFon)
 
+  let startTexture = new PIXI.Texture.from("start");
+  let start6Texture = new PIXI.Texture.from("start6");
+  currentFon.tint = 0x888888;
 
-  let startTexture = new PIXI.Texture.from('start')
-  let start6Texture = new PIXI.Texture.from('start6')
+  let start6 = new PIXI.Sprite(start6Texture);
+  start6.anchor.set(0.5, 0.5);
+  start6.height = start6.width = 50;
+  start6.position.set(world.width * 0.7, world.height * 0.7);
 
-  let start6 = new PIXI.Sprite(start6Texture)
-  start6.anchor.set(0.5,0.5)
-  start6.height = start6.width = 50
-  start6.position.set(world.width*4/5, world.height*4/5)
-
-
-  let start = new PIXI.Sprite(startTexture)
-  start.anchor.set(0.5,0.5)
-  start.height = start.width = 100
-  start.position.set(world.width/2, world.height/2)
-  start6.tint = 0x501412
-  start.buttonMode = start.interactive = true
+  let start = new PIXI.Sprite(startTexture);
+  start.anchor.set(0.5, 0.5);
+  start.height = start.width = 100;
+  start.position.set(world.width / 2, world.height / 2);
+  // start.tint = 0x888888;
+  start.buttonMode = start.interactive = true;
 
   const gameStart = () => {
-    startMuz.play()
-    gameScene.removeChildren()
+    // startMuz.play()
+    // DontTintThis.bind(currentFon)
+    currentFon.tint = 0xffffff;
+    gameScene.removeChild(start, start6);
     // setup()
-    tutorial()
-  }
+    tutorial();
+  };
   const scalerSpinner = () => {
-    start.height = start.width = 120
-    app.ticker.add(()=>{ start6.rotation +=0.05})
-  }
+    start.height = start.width = 120;
+    app.ticker.add(() => {
+      start6.rotation += 0.05;
+    });
+  };
 
   const scalerSpinnerOff = () => {
-    start.height = start.width = 100
-    start6.rotation = 0
-    app.ticker.add(()=>{ start6.rotation -=0.05})
+    start.height = start.width = 100;
+    start6.rotation = 0;
+    app.ticker.add(() => {
+      start6.rotation -= 0.05;
+    });
+  };
+
+  start
+    .on("pointerover", scalerSpinner)
+    .on("pointerout", scalerSpinnerOff)
+    .on("pointerdown", gameStart);
+
+  gameScene.addChild(start, start6);
+}
+
+function tutorial() {
+  const left = PIXI.Texture.from("leftArrow");
+  const right = PIXI.Texture.from("rightArrow");
+
+  const container = new PIXI.Container();
+  container.x = world.width / 10;
+  container.y = world.height / 4;
+  gameScene.addChild(container);
+
+  const paper = new PIXI.Texture.from("paper");
+  let tutWindow = new PIXI.Sprite(paper);
+  tutWindow.width = world.width * 0.8;
+  tutWindow.height = world.height * 0.6;
+
+  container.addChild(tutWindow);
+
+  const style = new PIXI.TextStyle({
+    fontFamily: "Impala",
+    fontSize: 18,
+    fill: "#1d1b1b",
+    stroke: "#fafafa",
+    strokeThickness: 2,
+    wordWrap: true,
+    wordWrapWidth: tutWindow.width * 0.65,
+  });
+  let page = 0;
+  let currentText;
+
+  const pageRefresher = (num) => {
+    currentText = new PIXI.Text(tutorialText[num], style);
+    currentText.x = tutWindow.x + tutWindow.width * 0.18;
+    currentText.y = tutWindow.y + tutWindow.height * 0.15;
+    container.addChild(currentText);
+  };
+  pageRefresher(page);
+
+  const leftArrow = new PIXI.Sprite(left);
+  const rightArrow = new PIXI.Sprite(right);
+  leftArrow.y = rightArrow.y = tutWindow.height * 0.8;
+  leftArrow.height = rightArrow.height = 50;
+  leftArrow.width = rightArrow.width = 25;
+  leftArrow.x = tutWindow.width * 0.35;
+  rightArrow.x = tutWindow.width * 0.6;
+  container.addChild(leftArrow, rightArrow);
+  leftArrow.buttonMode =
+    leftArrow.interactive =
+    rightArrow.buttonMode =
+    rightArrow.interactive =
+      true;
+  leftArrow
+    .on("pointerover", tintThis)
+    .on("pointerout", DontTintThis)
+    .on("pointerdown", prevPage);
+  rightArrow
+    .on("pointerover", tintThis)
+    .on("pointerout", DontTintThis)
+    .on("pointerdown", nextPage);
+
+  console.log(tutorialText.length);
+  function nextPage() {
+    container.removeChild(currentText);
+    if (page < tutorialText.length - 1) {
+      page += 1;
+      pageRefresher(page);
+    } else {
+      container.removeChildren();
+      setup();
+    }
   }
 
-  start.on('pointerover', scalerSpinner)
-        .on('pointerout', scalerSpinnerOff)
-        .on('pointerdown', gameStart)
-
-  
-  gameScene.addChild(start, start6)
+  function prevPage() {
+    container.removeChild(currentText);
+    page -= 1;
+    if (page < 0) {
+      page = 0;
+    }
+    pageRefresher(page);
+  }
 }
-
-const tutorial = () => {
-  const textureCave = PIXI.Texture.from("cave")
-  let currentFon = new PIXI.Sprite(textureCave)
-  currentFon.width=world.width
-  currentFon.height=world.height
-  gameScene.addChild(currentFon)
-}
-
 
 // const next = (func) => {
 //   func()
@@ -205,6 +304,37 @@ function setup() {
   let textureNight = PIXI.Texture.from("night");
   //#endregion
 
+  // let rockFon = new PIXI.Sprite(textureStone)
+  // rockFon.x=rockFon.y=10
+  // rockFon.width = 200
+  // rockFon.height = 50
+  // gameScene.addChild(rockFon)
+  
+  //#region fonrendering
+  const textureCave = PIXI.Texture.from("cave");
+  const textureCaveAtNight = PIXI.Texture.from("cave2");
+  const morning = new PIXI.Sprite(textureCave);
+  const evening = new PIXI.Sprite(textureCaveAtNight);
+  morning.width = evening.width = world.width;
+  morning.height = evening.height = world.height;
+  let currentFon = morning
+  
+  
+  const fon = new PIXI.Container
+  gameScene.addChild(fon)
+  // console.log(rockFon)
+
+  const fonRenderer = (day) => {
+    fon.removeChildren
+    if (day) {
+      currentFon = morning;
+    } else {
+      currentFon = evening;
+    }
+    fon.addChild(currentFon)
+  };
+  //#endregion
+
   let dayActs = [
     "Пойти на охоту",
     "Собирать ягоды",
@@ -220,6 +350,8 @@ function setup() {
   gameScene.addChild(resourceBar);
   gameScene.addChild(healthBar);
 
+
+
   actionMap.set(dayActs[0], hunting);
   actionMap.set(dayActs[1], gathering);
   actionMap.set(dayActs[2], supplies);
@@ -232,20 +364,20 @@ function setup() {
 
   let resourceBarFon = new PIXI.Sprite(textureStone);
   resourceBarFon.position.set(0, 0);
-  resourceBarFon.width = 512;
+  resourceBarFon.width = world.width;
   resourceBarFon.height = world.height * 0.15;
-  resourceBar.addChild(resourceBarFon);
+  // resourceBar.addChild(resourceBarFon);
 
   let healthBarFon = new PIXI.Sprite(textureStone);
   healthBarFon.width = app.stage.width;
   healthBarFon.height = world.height * 0.25;
   healthBarFon.position.set(0, world.height - healthBarFon.height);
-  healthBar.addChild(healthBarFon);
+  // // healthBar.addChild(healthBarFon);
 
-  let tab = (resourceBarFon.height * 2) / 3;
+  const tab = world.height / 10;
 
   let foodImage = new PIXI.Sprite(textureFood);
-  foodImage.position.set(tab, tab / 4);
+  foodImage.position.set(world.width / 2, tab / 4);
   foodImage.height = tab;
   foodImage.width = tab;
   resourceBar.addChild(foodImage);
@@ -259,7 +391,7 @@ function setup() {
     .on("pointerout", hintTabHide);
 
   let woodImage = new PIXI.Sprite(textureWood);
-  woodImage.position.set(tab * 5, tab / 4);
+  woodImage.position.set(world.width / 2 + tab * 2.5, tab / 2);
   woodImage.height = 50;
   woodImage.width = 70;
   resourceBar.addChild(woodImage);
@@ -272,12 +404,22 @@ function setup() {
     .on("pointerover", hintTab)
     .on("pointerout", hintTabHide);
 
-  let soupImage = new PIXI.Sprite(textureSoup);
-  soupImage.height = soupImage.width = healthBarFon.height / 3;
-  soupImage.position.set(
-    healthBarFon.width / 20,
-    healthBarFon.y + healthBarFon.height / 3
-  );
+  let energyImage = new PIXI.Sprite(textureEnergy);
+  energyImage.height = energyImage.width = tab*0.6;
+  energyImage.position.set(world.width / 25, tab/10);
+  healthBar.addChild(energyImage);
+  textMap.set(energyImage, "Сон и отдых восстанавливают энергию");
+  energyImage.interactive = true;
+  energyImage.buttonMode = true;
+  energyImage
+    .on("pointerdown", bonfireMenu)
+    .on("pointerup", bonfireMenuClose)
+    .on("pointerover", hintTab)
+    .on("pointerout", hintTabHide);  
+  
+    let soupImage = new PIXI.Sprite(textureSoup);
+  soupImage.height = soupImage.width = tab*0.6;
+  soupImage.position.set(world.width / 25, energyImage.y+energyImage.height*1.1);
   healthBar.addChild(soupImage);
   textMap.set(soupImage, "Используйте еду, чтобы заполнить шкалу сытости");
   soupImage.interactive = true;
@@ -288,24 +430,11 @@ function setup() {
     .on("pointerover", hintTab)
     .on("pointerout", hintTabHide);
 
-  let energyImage = new PIXI.Sprite(textureEnergy);
-  energyImage.height = energyImage.width = healthBarFon.height / 3;
-  energyImage.position.set(healthBarFon.width / 20, healthBarFon.y);
-  healthBar.addChild(energyImage);
-  textMap.set(energyImage, "Сон и отдых восстанавливают энергию");
-  energyImage.interactive = true;
-  energyImage.buttonMode = true;
-  energyImage
-    .on("pointerdown", bonfireMenu)
-    .on("pointerup", bonfireMenuClose)
-    .on("pointerover", hintTab)
-    .on("pointerout", hintTabHide);
-
   let smallBonfireImage = new PIXI.Sprite(textureSmallBonfire);
-  smallBonfireImage.height = smallBonfireImage.width = healthBarFon.height / 3;
+  smallBonfireImage.height = smallBonfireImage.width = tab*0.6;
   smallBonfireImage.position.set(
-    healthBarFon.width / 20,
-    healthBarFon.y + (healthBarFon.height * 2) / 3
+    world.width / 25,
+    soupImage.y+soupImage.height*1.1
   );
   healthBar.addChild(smallBonfireImage);
   textMap.set(smallBonfireImage, "Поддерживайте огонь, бросая в костёр дрова");
@@ -320,7 +449,7 @@ function setup() {
   let bonfire = new PIXI.Sprite(textureBonfire);
   bonfire.height = bonfire.width = tab * 2.5;
   bonfire.anchor.set(0.5, 0.5);
-  bonfire.position.set(gameScene.width / 2, gameScene.height / 2);
+  bonfire.position.set(world.width / 5, world.height * 0.85);
   gameScene.addChild(bonfire);
   textMap.set(bonfire, "Нажмите на костёр чтобы открыть меню действий");
   bonfire.interactive = true;
@@ -395,7 +524,7 @@ function setup() {
 
   let resourceRefresher = () => {
     resourceBar.removeChildren();
-    resourceBar.addChild(resourceBarFon, foodImage, woodImage);
+    resourceBar.addChild(foodImage, woodImage);
     foodRenderer();
     woodRenderer();
     timeRender();
@@ -407,8 +536,8 @@ function setup() {
     for (let i = 0; i < renderedHearts; i++) {
       hearts[i] = new PIXI.Sprite(textureFullheart);
       hearts[i].width = hearts[i].height = tab;
-      hearts[i].y = healthBarFon.y + hearts[i].height / 6;
-      hearts[i].x = healthBarFon.width / 2 + (i + 1) * 1.2 * hearts[i].width;
+      hearts[i].y = world.height*0.85
+      hearts[i].x = world.width / 2 + (i + 1) * 1.2 * hearts[i].width;
       hearts[i].interactive = hearts[i].buttonMode = true;
       textMap.set(hearts[i], "Сон и отдых восстанавливают здоровье");
       healthBar.addChild(hearts[i]);
@@ -488,7 +617,7 @@ function setup() {
 
   let healthBarRefresher = () => {
     healthBar.removeChildren();
-    healthBar.addChild(healthBarFon, energyImage, soupImage, smallBonfireImage);
+    healthBar.addChild(energyImage, soupImage, smallBonfireImage);
     energyRenderer();
     satietyRenderer();
     flameRenderer();
@@ -496,8 +625,10 @@ function setup() {
   };
 
   let refresher = () => {
+    fonRenderer(vitalStates.isDay)
     resourceRefresher();
     healthBarRefresher();
+    // gameScene.addChild(currentFon)
   };
 
   function deathCheck() {
@@ -536,14 +667,14 @@ function setup() {
       stroke: "#1d1b1b",
       strokeThickness: 2,
       wordWrap: true,
-      wordWrapWidth: bonfire.x - bonfire.width / 2,
+      wordWrapWidth: ((world.width - bonfire.x) / 2) * 0.9,
     });
 
     for (let i = 0; i < availibleActs.length; i++) {
       button[i] = new PIXI.Sprite(textureBrownButton);
+      button[i].x = bonfire.x + tab;
+      button[i].width = (world.width - bonfire.x) / 2;
       button[i].height = tab;
-      button[i].width = bonfire.x - (bonfire.width / 2) * 1.1;
-      button[i].x = tab / 2;
       button[i].y =
         resourceBar.height + button[i].height / 2 + i * button[i].height;
       bonfireMenuFon.addChild(button[i]);
@@ -575,14 +706,6 @@ function setup() {
     closeButtonText.x = closeButton.x + closeButton.width / 20;
     closeButtonText.y = closeButton.y + closeButton.height / 4;
     bonfireMenuFon.addChild(closeButtonText);
-  }
-
-  function tintThis() {
-    this.tint = 0x8b3621;
-  }
-
-  function DontTintThis() {
-    this.tint = 0xffffff;
   }
 
   function bonfireMenuClose() {
@@ -617,10 +740,9 @@ function setup() {
     player.energy -= 50;
     player.health -= huntingResults.damage;
 
-
     bonfireMenuClose();
-    check(resources)
-    check(player)
+    check(resources);
+    check(player);
     dayToNight();
     refresher();
     resultTab(actResults.hunting, huntingResults.text, huntingResults.variant);
@@ -640,8 +762,8 @@ function setup() {
     player.energy -= 30;
     let result = "Еда +" + crop + "\nЭнергия -30";
     dayToNight();
-    check(resources)
-    check(player)
+    check(resources);
+    check(player);
     refresher();
     resultTab(actResults.gathering, result);
   }
@@ -654,8 +776,8 @@ function setup() {
     player.energy -= 30;
     let result = "Дрова +" + crop + "\nЭнергия -30";
     dayToNight();
-    check(resources)
-    check(player)
+    check(resources);
+    check(player);
     refresher();
     resultTab(actResults.supplies, result);
   }
@@ -676,11 +798,11 @@ function setup() {
     resources.food -= 5;
     player.energy += 10;
     player.satiety += 40;
-    check(resources)
-    check(player)
+    check(resources);
+    check(player);
+    nightToDay();
     refresher();
     resultTab(actResults.eating, "Энергия +10, \nСытость +40");
-    nightToDay();
   }
 
   function kindle() {
@@ -689,9 +811,9 @@ function setup() {
     resources.wood -= 5;
     resources.flame += 20;
     check(resources);
+    nightToDay();
     refresher();
     resultTab(actResults.kindle, "Дрова -5, \nПламя Костра +20");
-    nightToDay();
   }
 
   function sleep() {
@@ -701,8 +823,8 @@ function setup() {
     player.satiety -= 20;
     resources.flame -= 10;
     nightToDay();
-    check(resources)
-    check(player)
+    check(resources);
+    check(player);
     refresher();
     resultTab(actResults.sleep, "Энергия +30");
   }
@@ -732,7 +854,7 @@ function setup() {
       0,
       0,
       world.width / 1.9,
-      soupImage.y - resultContainer.y,
+      bonfire.y - resultContainer.y,
       20
     );
     resultTabFon.endFill();
@@ -862,4 +984,12 @@ function hintTab() {
 function hintTabHide() {
   gameScene.removeChild(hintBackground);
   gameScene.removeChild(hint);
+}
+
+function tintThis() {
+  this.tint = 0x8b3621;
+}
+
+function DontTintThis() {
+  this.tint = 0xffffff;
 }
