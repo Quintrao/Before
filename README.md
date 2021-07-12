@@ -1,4 +1,4 @@
-# Paleo
+# Before
 
 Optimistic try to join IT by making a simple step-by-step survival on JS
 
